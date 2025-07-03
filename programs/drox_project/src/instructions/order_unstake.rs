@@ -10,6 +10,7 @@ use marinade_cpi::TicketAccountData;
 /// Accounts context for the order_unstake instruction.
 /// This struct defines all accounts required to order an unstake ticket via Marinade CPI.
 #[derive(Accounts)]
+#[instruction( msol_amount: u64, ticket_id: u64)]
 pub struct OrderUnstakeSol<'info> {
     /// CHECK: This is the Marinade state account. We trust the CPI program to validate it.
     #[account(mut)]
@@ -35,9 +36,10 @@ pub struct OrderUnstakeSol<'info> {
         init_if_needed,
         payer = payer,
         seeds = [
+            b"ticket",
             state.key().as_ref(),
             burn_msol_authority.key().as_ref(),
-            b"ticket"
+            ticket_id.to_le_bytes().as_ref()        
         ],
         bump ,
         space = 8 + std::mem::size_of::<TicketAccountData>(),
@@ -62,7 +64,7 @@ impl<'info> OrderUnstakeSol<'info> {
     /// # Arguments
     /// * `msol_amount` - Amount of mSOL to order for unstake
     /// * `bump` - The bump seed for the new_ticket_account PDA
-    pub fn process(&mut self, msol_amount: u64, bump: u8) -> Result<()> {
+    pub fn process(&mut self, msol_amount: u64,ticket_id: u64 ) -> Result<()> {
         // Check for valid amount
         if msol_amount == 0 {
             return Err(InvalidAmount.into());
@@ -85,20 +87,11 @@ impl<'info> OrderUnstakeSol<'info> {
             rent: self.rent.to_account_info(),
             token_program: self.token_program.to_account_info()
         };
-        // Prepare signer seeds for the new_ticket_account PDA
-        let seeds_for_new_ticket_account: &[&[u8]] = &[
-            self.state.key.as_ref(),
-            self.burn_msol_authority.key.as_ref(),
-            b"ticket",
-            &[bump],
-        ];
-        let signer_seeds: &[&[&[u8]]] = &[seeds_for_new_ticket_account];
-        let cpi_ctx = CpiContext::new_with_signer(
-            cpi_program,
-            cpi_account,
-            signer_seeds,
-        );
+    
+          let cpi_ctx = CpiContext::new(cpi_program, cpi_account);
+
         // Perform the CPI call to Marinade's order_unstake instruction
-        order_unstake(cpi_ctx, msol_amount)
+          order_unstake(cpi_ctx, msol_amount)
+        
     }
 }

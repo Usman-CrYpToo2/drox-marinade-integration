@@ -7,6 +7,7 @@ use marinade_cpi::TicketAccountData;
 /// Accounts context for the claim instruction.
 /// This struct defines all accounts required to claim SOL from a completed Marinade unstake ticket.
 #[derive(Accounts)]
+#[instruction(ticket_id: u64)]
 pub struct ClaimSol<'info> {
     /// CHECK: This is the Marinade state account. We trust the CPI program to validate it.
     #[account(mut)]
@@ -18,9 +19,10 @@ pub struct ClaimSol<'info> {
     #[account(
         mut,
         seeds = [
+            b"ticket",
             state.key().as_ref(),
             transfer_sol_to.key().as_ref(),
-            b"ticket"
+            ticket_id.to_le_bytes().as_ref()        
         ],
         bump ,
         owner = marinade_finance_program.key()
@@ -46,7 +48,7 @@ impl<'info> ClaimSol<'info> {
     ///
     /// # Arguments
     /// * `bump` - The bump seed for the ticket_account PDA
-    pub fn process(&mut self, bump: u8) -> Result<()> {
+    pub fn process(&mut self, ticket_id: u64 ) -> Result<()> {
         // Prepare CPI context for Marinade claim
         let cpi_program: AccountInfo<'_> = self.marinade_finance_program.to_account_info();
         let cpi_account =  Claim {
@@ -57,19 +59,8 @@ impl<'info> ClaimSol<'info> {
             clock: self.clock.to_account_info(),
             system_program: self.system_program.to_account_info()
         };
-        // Prepare signer seeds for the ticket_account PDA
-        let seeds_for_new_ticket_account: &[&[u8]] = &[
-            self.state.key.as_ref(),
-            self.transfer_sol_to.key.as_ref(),
-            b"ticket",
-            &[bump],
-        ];
-        let signer_seeds: &[&[&[u8]]] = &[seeds_for_new_ticket_account];
-        let cpi_ctx = CpiContext::new_with_signer(
-            cpi_program,
-            cpi_account,
-            signer_seeds,
-        );
+        
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_account);  
         // Perform the CPI call to Marinade's claim instruction
         claim(cpi_ctx)
     }

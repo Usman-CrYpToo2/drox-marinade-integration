@@ -44,20 +44,18 @@ pub mod drox_project {
     /// # Arguments
     /// * `ctx` - Context containing all required accounts
     /// * `msol_amount` - Amount of mSOL to order for unstake
-    pub fn order_unstake(ctx: Context<OrderUnstakeSol>, msol_amount: u64) -> Result<()> {
-         // Get the bump for the new_ticket_account PDA
-         let bump = ctx.bumps.new_ticket_account;
-         ctx.accounts.process(msol_amount, bump)
+    /// * `ticket_id` - Unique identifier for the unstake ticket (should be unique per user/ticket, used as a PDA seed)
+    pub fn order_unstake(ctx: Context<OrderUnstakeSol>, msol_amount: u64, ticket_id: u64) -> Result<()> {
+         ctx.accounts.process(msol_amount, ticket_id)
     }
 
     /// Claim SOL from a completed unstake ticket via Marinade CPI
     ///
     /// # Arguments
     /// * `ctx` - Context containing all required accounts
-    pub fn claim(ctx: Context<ClaimSol>) -> Result<()> {
-         // Get the bump for the ticket_account PDA
-         let bump = ctx.bumps.ticket_account;
-         ctx.accounts.process(bump)
+    /// * `ticket_id` - Unique identifier for the unstake ticket (must match the ticket used in order_unstake, used as a PDA seed)
+    pub fn claim(ctx: Context<ClaimSol>, ticket_id: u64) -> Result<()> {
+         ctx.accounts.process(ticket_id)
     }
 }
 

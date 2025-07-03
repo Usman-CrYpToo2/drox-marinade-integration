@@ -12,6 +12,7 @@ import {
  } from "./constant"
 import fs from "fs";
 import { homedir } from "os";
+import {getTicketAccount} from "./utils";
 
 // Load the local wallet keypair for signing transactions
 const scrt = JSON.parse(fs.readFileSync(`${homedir()}/.config/solana/id.json`, "utf-8"));
@@ -28,8 +29,8 @@ describe("drox_project", () => {
   // Get the Anchor program client
   const program = anchor.workspace.droxProject as Program<DroxProject>;
 
-  it("deposit sol!", async () => {
-    // Test depositing SOL and receiving mSOL
+ it("deposit sol!", async () => {
+    //Test depositing SOL and receiving mSOL
     const tx = await program.methods.deposit(new anchor.BN(0.2 * anchor.web3.LAMPORTS_PER_SOL)).accounts({
        state : STATE,
        transferFrom : pubkey,
@@ -58,23 +59,28 @@ describe("drox_project", () => {
   })
 
   it("unstake sol through order unstake", async() => {
-      // Test delayed unstake (order ticket)
-      const tx = await program.methods.orderUnstake(new anchor.BN(0.04 * anchor.web3.LAMPORTS_PER_SOL)).accounts({
+//       // Test delayed unstake (order ticket)
+      const ticketId = new anchor.BN(1); // or whatever ticket id you want
+      const newTicketAccount = getTicketAccount(pubkey, ticketId, program.programId);
+      const tx = await program.methods.orderUnstake(new anchor.BN(0.04 * anchor.web3.LAMPORTS_PER_SOL), ticketId).accountsPartial({
           state: STATE,
           burnMsolAuthority: pubkey,
-          payer: pubkey
+          payer: pubkey,
+          newTicketAccount: newTicketAccount
       }).signers([signer]).rpc();
       console.log("Your transaction signature", tx);
    
-
   })
 
      it("claim sol", async() => {
         // Test claiming SOL from a completed unstake ticket
-        const tx = await program.methods.claim().accounts({
+        const ticketId = new anchor.BN(1); // or whatever ticket id you want
+        const newTicketAccount = getTicketAccount(pubkey, ticketId, program.programId);
+        const tx = await program.methods.claim(ticketId).accountsPartial({
           state: STATE,
           reservePda: RESERVE_PDA,
          transferSolTo: pubkey,
+         ticketAccount: newTicketAccount
         }).signers([signer]).rpc();
         console.log("Your transaction signature", tx);
      
