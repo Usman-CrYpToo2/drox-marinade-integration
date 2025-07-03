@@ -1,4 +1,4 @@
-# drox_project
+# drox coding assessment
 
 A Solana Anchor program for interacting with Marinade Finance, enabling users to:
 - Deposit SOL and receive mSOL
