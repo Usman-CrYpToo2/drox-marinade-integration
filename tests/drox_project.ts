@@ -13,17 +13,23 @@ import {
 import fs from "fs";
 import { homedir } from "os";
 
+// Load the local wallet keypair for signing transactions
 const scrt = JSON.parse(fs.readFileSync(`${homedir()}/.config/solana/id.json`, "utf-8"));
 const signer = anchor.web3.Keypair.fromSecretKey(Uint8Array.from(scrt));
 const pubkey = signer.publicKey;
+
+// Main test suite for drox_project
+// Each test exercises a different instruction in the Anchor program
 
 describe("drox_project", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
+  // Get the Anchor program client
   const program = anchor.workspace.droxProject as Program<DroxProject>;
 
   it("deposit sol!", async () => {
+    // Test depositing SOL and receiving mSOL
     const tx = await program.methods.deposit(new anchor.BN(0.2 * anchor.web3.LAMPORTS_PER_SOL)).accounts({
        state : STATE,
        transferFrom : pubkey,
@@ -32,7 +38,6 @@ describe("drox_project", () => {
        liqPoolSolLegPda: LIQ_POOL_SOL_LEG_PDA,
        reservePda: RESERVE_PDA,
        msolMintAuthority: MSOL_MINT_AUTHORITY,
-       
     }).signers([signer]).rpc();
 
      console.log("Your transaction signature", tx);
@@ -40,6 +45,7 @@ describe("drox_project", () => {
 
 
   it("unstake sol through liquid unstake ", async() => {
+      // Test liquid unstaking mSOL for SOL
       const tx = await program.methods.liquidUnstake(new anchor.BN(0.1 * anchor.web3.LAMPORTS_PER_SOL)).accounts({
           state : STATE,
           liqPoolMsolLeg: LIQ_POOL_MSOL_LEG,
@@ -52,9 +58,11 @@ describe("drox_project", () => {
   })
 
   it("unstake sol through order unstake", async() => {
+      // Test delayed unstake (order ticket)
       const tx = await program.methods.orderUnstake(new anchor.BN(0.04 * anchor.web3.LAMPORTS_PER_SOL)).accounts({
           state: STATE,
           burnMsolAuthority: pubkey,
+          payer: pubkey
       }).signers([signer]).rpc();
       console.log("Your transaction signature", tx);
    
@@ -62,11 +70,11 @@ describe("drox_project", () => {
   })
 
      it("claim sol", async() => {
+        // Test claiming SOL from a completed unstake ticket
         const tx = await program.methods.claim().accounts({
           state: STATE,
           reservePda: RESERVE_PDA,
          transferSolTo: pubkey,
-          
         }).signers([signer]).rpc();
         console.log("Your transaction signature", tx);
      
