@@ -55,11 +55,43 @@ Below are example transactions for each main function, executed on Solana devnet
 - [View Transaction on Solana Explorer](https://explorer.solana.com/tx/3n1q6xe8pQ7PdUWfT2nYPHoFXNFyeyQnFrF7b4KuxK6H55MamQXjyHRL4Y1mHdoJG5EgTGvj59TjMxBPb3ehoShW?cluster=devnet)
 
 ## Project Structure
-- `programs/` - Anchor Rust program
-- `tests/` - TypeScript integration tests
-- `migrations/` - Anchor deployment scripts
-- `constants.rs` - Important public keys and addresses
-- `error.rs` - Custom error codes
+
+```
+drox_project/
+├── programs/
+│   └── drox_project/
+│       ├── src/
+│       │   ├── instructions/
+│       │   │   ├── claim.rs           # Claim SOL from completed ticket
+│       │   │   ├── deposit_sol.rs     # Deposit SOL and receive mSOL
+│       │   │   ├── liquid_unstake.rs  # Liquid unstake mSOL for SOL
+│       │   │   ├── order_unstake.rs   # Order delayed unstake ticket
+│       │   │   └── mod.rs             # Instruction module declarations
+│       │   ├── constants.rs           # Important public keys and addresses
+│       │   ├── error.rs               # Custom error codes
+│       │   └── lib.rs                 # Program entrypoint and handlers
+│       ├── Cargo.toml                 # Rust crate manifest
+│       └── Xargo.toml                 # Xargo config (if needed)
+├── tests/
+│   ├── drox_project.ts                # TypeScript integration tests
+│   └── constant.ts                    # Test constants (public keys, etc.)
+├── migrations/
+│   └── deploy.ts                      # Anchor deployment script
+├── Anchor.toml                        # Anchor project config
+├── Cargo.toml                         # Workspace manifest
+├── package.json                       # Node.js dependencies
+├── tsconfig.json                      # TypeScript config
+├── yarn.lock                          # Yarn lockfile
+└── README.md                          # Project documentation
+```
+
+- **programs/drox_project/src/instructions/**: All instruction handlers for the Anchor program
+- **programs/drox_project/src/constants.rs**: Important public keys and addresses
+- **programs/drox_project/src/error.rs**: Custom error codes for the program
+- **programs/drox_project/src/lib.rs**: Main program entrypoint and instruction routing
+- **tests/**: TypeScript integration tests and test constants
+- **migrations/**: Anchor deployment scripts
+- **Anchor.toml, Cargo.toml, package.json, etc.**: Project configuration files
 
 ## License
 MIT
